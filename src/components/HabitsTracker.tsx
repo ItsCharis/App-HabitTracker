@@ -259,7 +259,7 @@ export default function HabitsTracker({
                 placeholder="Contoh: Sholat Ashar Terjadwal"
                 value={pName}
                 onChange={e => setPName(e.target.value)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               />
             </div>
             
@@ -271,7 +271,7 @@ export default function HabitsTracker({
                 required
                 value={pTime}
                 onChange={e => setPTime(e.target.value)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               />
             </div>
 
@@ -281,7 +281,7 @@ export default function HabitsTracker({
                 id="select-primary-category"
                 value={pCategory}
                 onChange={e => setPCategory(e.target.value as any)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               >
                 <option value="Spiritual">Spiritual / Keagamaan</option>
                 <option value="Kesehatan">Kesehatan / Kebugaran</option>
@@ -324,7 +324,7 @@ export default function HabitsTracker({
                 placeholder="Contoh: Tadarus Al-Quran 1 Ruku'"
                 value={sName}
                 onChange={e => setSName(e.target.value)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               />
             </div>
             
@@ -335,7 +335,7 @@ export default function HabitsTracker({
                 type="time"
                 value={sTime}
                 onChange={e => setSTime(e.target.value)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               />
             </div>
 
@@ -345,7 +345,7 @@ export default function HabitsTracker({
                 id="select-secondary-points"
                 value={sPoints}
                 onChange={e => setSPoints(Number(e.target.value))}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               >
                 <option value={10}>+10 XP (Ringan)</option>
                 <option value={15}>+15 XP (Sedang)</option>
@@ -359,7 +359,7 @@ export default function HabitsTracker({
                 id="select-secondary-category"
                 value={sCategory}
                 onChange={e => setSCategory(e.target.value as any)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               >
                 <option value="Pengembangan">Pengembangan Diri</option>
                 <option value="Olahraga">Olahraga / Fisik</option>

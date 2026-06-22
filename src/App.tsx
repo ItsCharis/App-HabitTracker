@@ -242,7 +242,7 @@ export default function App() {
                 <GraduationCap className="w-6 h-6 shrink-0" />
               </div>
               <div className="leading-tight">
-                <div className="text-sm font-extrabold tracking-tight dark:text-white">Prod canva</div>
+                <div className="text-sm font-extrabold tracking-tight dark:text-white">HabitFlow</div>
                 <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold uppercase tracking-widest">Akademik Co-Pilot</div>
               </div>
             </div>
@@ -332,7 +332,7 @@ export default function App() {
               <div className="p-1.5 bg-indigo-600 text-white rounded-lg">
                 <GraduationCap className="w-5 h-5 shrink-0" />
               </div>
-              <span className="text-sm font-extrabold tracking-tight dark:text-white">Prod canva</span>
+              <span className="text-sm font-extrabold tracking-tight dark:text-white">HabitFlow</span>
             </div>
 
             {/* Right profile info & Theme switcher */}

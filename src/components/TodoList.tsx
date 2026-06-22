@@ -160,7 +160,7 @@ export default function TodoList({
   const filteredTasks = todoTasks.filter(task => {
     const matchCategory = categoryFilter === 'semua' || task.category === categoryFilter;
     const matchPriority = priorityFilter === 'semua' || task.priority === priorityFilter;
-    return matchCategory && matchPriority;
+    return matchCategory && matchPriority && !task.completed;
   });
 
   return (
@@ -242,7 +242,7 @@ export default function TodoList({
                 placeholder="Contoh: Mengunggah berkas rancangan UML kuliah PSI"
                 value={taskTitle}
                 onChange={e => setTaskTitle(e.target.value)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               />
             </div>
 
@@ -253,7 +253,7 @@ export default function TodoList({
                 id="select-todo-priority"
                 value={taskPriority}
                 onChange={e => setTaskPriority(e.target.value as any)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               >
                 <option value="high">🔴 Tinggi (High) - +10 XP</option>
                 <option value="medium">🟡 Sedang (Medium) - +5 XP</option>
@@ -269,7 +269,7 @@ export default function TodoList({
                 type="time"
                 value={taskDeadline}
                 onChange={e => setTaskDeadline(e.target.value)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               />
             </div>
 
@@ -280,7 +280,7 @@ export default function TodoList({
                 id="select-todo-category"
                 value={taskCategory}
                 onChange={e => setTaskCategory(e.target.value)}
-                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
               >
                 <option value="Kuliah">Kuliah / Studi</option>
                 <option value="Organisasi">Organisasi Kampus</option>
@@ -299,7 +299,7 @@ export default function TodoList({
                   placeholder="Masukkan kategori custom (misal: Skripsi, KP, Kos)"
                   value={customCategoryInput}
                   onChange={e => setCustomCategoryInput(e.target.value)}
-                  className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-100 dark:bg-slate-950 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                  className="w-full h-11 px-3 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-semibold text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
                 />
               </div>
             )}
@@ -374,7 +374,7 @@ export default function TodoList({
                         type="text"
                         value={editTitle}
                         onChange={e => setEditTitle(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm font-semibold rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 text-sm font-semibold rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-hidden"
                       />
                       
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -385,7 +385,7 @@ export default function TodoList({
                             type="text"
                             value={editCategory}
                             onChange={e => setEditCategory(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 text-xs rounded-lg px-2 py-1"
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-100 text-xs rounded-lg px-2 py-1"
                           />
                         </div>
                         
@@ -395,7 +395,7 @@ export default function TodoList({
                             id={`edit-priority-${task.id}`}
                             value={editPriority}
                             onChange={e => setEditPriority(e.target.value as any)}
-                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 text-xs rounded-lg px-2 py-1"
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-100 text-xs rounded-lg px-2 py-1"
                           >
                             <option value="high">🔴 Tinggi (High)</option>
                             <option value="medium">🟡 Sedang (Medium)</option>
@@ -410,7 +410,7 @@ export default function TodoList({
                             type="time"
                             value={editDeadline}
                             onChange={e => setEditDeadline(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 text-xs rounded-lg px-2 py-1"
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 text-slate-800 dark:text-slate-100 text-xs rounded-lg px-2 py-1"
                           />
                         </div>
                       </div>

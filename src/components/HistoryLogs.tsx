@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
   Download, 
   Upload, 
@@ -19,7 +19,12 @@ import {
   X,
   User,
   ShieldAlert,
-  AlertTriangle
+  AlertTriangle,
+  Cloud,
+  RefreshCw,
+  ExternalLink,
+  Lock,
+  LogOut
 } from 'lucide-react';
 import { DailyHistoryItem, UserStats, PrimaryHabit, SecondaryHabit, TodoTask, BigProject } from '../types';
 import { 
@@ -29,6 +34,20 @@ import {
   DEFAULT_TODOTASKS, 
   DEFAULT_BIGPROJECTS 
 } from '../utils';
+import { 
+  initAuth, 
+  googleSignIn, 
+  getAccessToken, 
+  logout 
+} from '../lib/googleAuth';
+import { 
+  getOrCreateSpreadsheet, 
+  exportHistoryToSheets, 
+  importHistoryFromSheets, 
+  fetchUserInfo, 
+  UserProfileInfo,
+  SPREADSHEET_TITLE
+} from '../lib/sheetsService';
 
 interface HistoryLogsProps {
   history: DailyHistoryItem[];
@@ -68,6 +87,162 @@ export default function HistoryLogs({
   const [showResetModal, setShowResetModal] = useState(false);
   const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
   const [newProfileName, setNewProfileName] = useState(stats.username || 'Achmad Maimun');
+
+  // Google Sheets integration state variables
+  const [googleUser, setGoogleUser] = useState<UserProfileInfo | null>(null);
+  const [spreadsheetId, setSpreadsheetId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  // Initialize and check auto login
+  useEffect(() => {
+    const unsubscribe = initAuth(
+      async (firebaseUser, token) => {
+        setIsConnected(true);
+        try {
+          const uInfo = await fetchUserInfo(token);
+          setGoogleUser(uInfo);
+          const sheetId = await getOrCreateSpreadsheet(token);
+          setSpreadsheetId(sheetId);
+        } catch (e: any) {
+          console.error(e);
+        }
+      },
+      () => {
+        setIsConnected(false);
+        setGoogleUser(null);
+        setSpreadsheetId(null);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  const handleConnectGoogle = async () => {
+    setApiError(null);
+    setIsSyncing(true);
+    try {
+      const loginResult = await googleSignIn();
+      if (loginResult) {
+        setIsConnected(true);
+        const uInfo = await fetchUserInfo(loginResult.accessToken);
+        setGoogleUser(uInfo);
+        
+        const sheetId = await getOrCreateSpreadsheet(loginResult.accessToken);
+        setSpreadsheetId(sheetId);
+        
+        setImportNotice({
+          status: 'success',
+          message: `Berhasil terhubung dengan Google Akun: ${uInfo.name} (${uInfo.email})`
+        });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setApiError(err.message || 'Gagal login Google.');
+      setImportNotice({
+        status: 'error',
+        message: 'Gagal menghubungkan Google Akun Anda. Periksa koneksi internet.'
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleDisconnectGoogle = async () => {
+    try {
+      await logout();
+      setGoogleUser(null);
+      setSpreadsheetId(null);
+      setIsConnected(false);
+      setImportNotice({
+        status: 'success',
+        message: 'Berhasil memutuskan koneksi akun Google.'
+      });
+    } catch (err: any) {
+      console.error(err);
+    }
+  };
+
+  const handleSyncExport = async () => {
+    setApiError(null);
+    setIsSyncing(true);
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        throw new Error('Sesi Google telah kedaluwarsa. Silakan hubungkan ulang.');
+      }
+      
+      let targetSheetId = spreadsheetId;
+      if (!targetSheetId) {
+        targetSheetId = await getOrCreateSpreadsheet(token);
+        setSpreadsheetId(targetSheetId);
+      }
+      
+      const confirmed = window.confirm(
+        'Apakah Anda yakin ingin mengekspor & menyinkronkan seluruh riwayat pekanan saat ini ke Google Spreadsheet? Ini akan menulis ulang isi spreadsheet Anda.'
+      );
+      if (!confirmed) {
+        return;
+      }
+
+      await exportHistoryToSheets(token, targetSheetId, history);
+      
+      setImportNotice({
+        status: 'success',
+        message: 'Berhasil menyinkronkan & menyimpan riwayat harian/permingguan Anda ke Google Sheets!'
+      });
+    } catch (err: any) {
+      console.error(err);
+      setApiError(err.message || 'Gagal sinkron ekspor.');
+      setImportNotice({
+        status: 'error',
+        message: `Gagal ekspor ke Google Sheets: ${err.message || 'Gangguan Server'}`
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSyncImport = async () => {
+    setApiError(null);
+    setIsSyncing(true);
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        throw new Error('Sesi Google telah kedaluwarsa. Silakan hubungkan ulang.');
+      }
+      
+      let targetSheetId = spreadsheetId;
+      if (!targetSheetId) {
+        targetSheetId = await getOrCreateSpreadsheet(token);
+        setSpreadsheetId(targetSheetId);
+      }
+
+      const confirmed = window.confirm(
+        'Apakah Anda yakin ingin mengimpor dari Google Sheets? Tindakan ini akan menimpa seluruh rekam riwayat pekanan lokal di browser ini dengan data dari spreadsheet.'
+      );
+      if (!confirmed) {
+        return;
+      }
+
+      const importedHistory = await importHistoryFromSheets(token, targetSheetId);
+      setHistory(importedHistory);
+      
+      setImportNotice({
+        status: 'success',
+        message: `Berhasil mengambil ${importedHistory.length} catatan riwayat performa dari Google Sheets!`
+      });
+    } catch (err: any) {
+      console.error(err);
+      setApiError(err.message || 'Gagal sinkron impor.');
+      setImportNotice({
+        status: 'error',
+        message: `Gagal impor dari Google Sheets: ${err.message || 'Format spreadsheet tidak sesuai'}`
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Export state to JSON
   const handleExportData = () => {
@@ -245,6 +420,133 @@ export default function HistoryLogs({
           <div className="font-semibold">{importNotice.message}</div>
         </div>
       )}
+
+      {/* GOOGLE SHEETS CLOUD SYNCHRONIZATION */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+              <Cloud className="w-5 h-5 animate-pulse" />
+              <span>SINKRONISASI GOOGLE SHEETS CLOUD</span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl text-left">
+              Simpan dan muat otomatis riwayat rekam performa perminggu Anda langsung ke spreadsheet <strong>{SPREADSHEET_TITLE}</strong> di Google Drive Anda.
+            </p>
+          </div>
+          
+          <div className="shrink-0">
+            {isConnected && googleUser ? (
+              <button
+                onClick={handleDisconnectGoogle}
+                className="px-3.5 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-500 hover:text-slate-700 dark:text-slate-400 text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer transition-all"
+                title="Putuskan Akun"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Disconnect</span>
+              </button>
+            ) : (
+              <span className="text-[10px] bg-slate-100 dark:bg-slate-950 px-2 py-1 rounded-lg text-slate-400 font-mono flex items-center gap-1.5 border border-slate-200/50 dark:border-slate-850">
+                <Lock className="w-3 h-3" />
+                <span>Sesi Terenkripsi</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Sync Core Body */}
+        {!isConnected ? (
+          <div className="p-6 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-850 text-center space-y-4">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-950/40 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto border border-indigo-100 dark:border-indigo-900/30">
+              <Cloud className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-xs font-bold text-slate-850 dark:text-white">Google Sheets Belum Terhubung</h4>
+              <p className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed">
+                Butuh sinkronisasi data antar peramban atau perangkat berbeda? Masuk menggunakan akun Google Anda dengan perizinan Drive dan Spreadsheet untuk mulai menyimpan rekam data mingguan.
+              </p>
+            </div>
+            
+            <button
+              onClick={handleConnectGoogle}
+              disabled={isSyncing}
+              className="px-6 h-11 bg-indigo-600 hover:bg-indigo-750 disabled:bg-indigo-450 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2.5 mx-auto shadow-xs transition-all hover:-translate-y-0.5 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {isSyncing ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-4 h-4 shrink-0">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                </svg>
+              )}
+              <span>Hubungkan Akun Google</span>
+            </button>
+          </div>
+        ) : (
+          <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-150 dark:border-slate-850 p-5 rounded-2xl space-y-5">
+            {/* User credentials banner info */}
+            <div className="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-slate-200 dark:border-slate-850">
+              <div className="flex items-center gap-3">
+                {googleUser?.photoUrl ? (
+                  <img
+                    src={googleUser.photoUrl}
+                    alt={googleUser.name}
+                    referrerPolicy="no-referrer"
+                    className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-800"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-extrabold text-sm">
+                    {googleUser?.name?.[0] || 'U'}
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs font-bold text-slate-850 dark:text-white leading-tight">{googleUser?.name}</div>
+                  <div className="text-[10px] text-slate-450 dark:text-slate-400">{googleUser?.email}</div>
+                </div>
+              </div>
+
+              {spreadsheetId && (
+                <a
+                  href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-emerald-50 hover:bg-emerald-105 text-emerald-800 dark:bg-emerald-950/45 dark:text-emerald-400 px-3.5 py-1.5 border border-emerald-150 dark:border-emerald-900/40 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all text-center self-start"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Buka Google Sheets Anda ↗</span>
+                </a>
+              )}
+            </div>
+
+            {/* Sync actions buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              {/* Action 1: Export up to Sheets */}
+              <button
+                onClick={handleSyncExport}
+                disabled={isSyncing}
+                className="h-11 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors"
+              >
+                <Cloud className="w-4 h-4 shrink-0" />
+                <span>Simpan & Ekspor ke Google Sheets</span>
+              </button>
+
+              {/* Action 2: Import down from Sheets */}
+              <button
+                onClick={handleSyncImport}
+                disabled={isSyncing}
+                className="h-11 px-4 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-655 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <RefreshCw className={`w-4 h-4 shrink-0 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>Ambil & Impor dari Google Sheets</span>
+              </button>
+
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* BACKUP OPERATIONS SECTION GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
