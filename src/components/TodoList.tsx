@@ -160,7 +160,7 @@ export default function TodoList({
   const filteredTasks = todoTasks.filter(task => {
     const matchCategory = categoryFilter === 'semua' || task.category === categoryFilter;
     const matchPriority = priorityFilter === 'semua' || task.priority === priorityFilter;
-    return matchCategory && matchPriority && !task.completed;
+    return matchCategory && matchPriority;
   });
 
   return (
